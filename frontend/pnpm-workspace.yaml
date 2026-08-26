@@ -1,0 +1,16 @@
+allowBuilds:
+  '@parcel/watcher': set this to true or false
+  core-js: set this to true or false
+  es5-ext: set this to true or false
+  esbuild: set this to true or false
+  vue-demi: set this to true or false
+# 关闭运行脚本前的依赖检查，避免 ERR_PNPM_IGNORED_BUILDS 阻断 pnpm dev
+verifyDepsBeforeRun: false
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@tailwindcss/oxide'
+  - core-js
+  - es5-ext
+  - esbuild
+  - vue-demi

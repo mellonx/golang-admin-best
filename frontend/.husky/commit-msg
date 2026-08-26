@@ -1,0 +1,6 @@
+msg_file="$1"
+case "$msg_file" in
+  /*) ;;
+  *) msg_file="$PWD/$msg_file" ;;
+esac
+cd frontend && pnpm dlx commitlint --edit "$msg_file"

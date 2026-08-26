@@ -1,0 +1,15 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.cursorrules
+
+# Frontend auto-generated files
+frontend/src/types/import/auto-imports.d.ts
+frontend/src/types/import/components.d.ts
+frontend/.auto-import.json
+
+# Backend
+backend/tmp/
+backend/*.log
