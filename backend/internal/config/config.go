@@ -54,7 +54,7 @@ func Load() error {
 				Port:     getEnv("DB_PORT", "3306"),
 				User:     getEnv("DB_USER", "root"),
 				Password: getEnv("DB_PASSWORD", "root"),
-				DBName:   getEnv("DB_NAME", "art_design_pro"),
+				DBName:   getEnv("DB_NAME", "golang_admin_best"),
 				Charset:  getEnv("DB_CHARSET", "utf8mb4"),
 				MaxIdle:  getEnvAsInt("DB_MAX_IDLE", 10),
 				MaxOpen:  getEnvAsInt("DB_MAX_OPEN", 100),

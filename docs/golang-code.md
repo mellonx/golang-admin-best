@@ -623,7 +623,7 @@ import (
 
 func main() {
 	// 连接数据库
-	dsn := "root:password@tcp(127.0.0.1:3306)/art_design_pro?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "root:password@tcp(127.0.0.1:3306)/golang_admin_best?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("数据库连接失败:", err)
