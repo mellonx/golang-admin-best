@@ -19,6 +19,8 @@ go.work
 
 # Config files with secrets
 configs/config.yaml
+.env
+.env.local
 
 # Logs
 *.log
