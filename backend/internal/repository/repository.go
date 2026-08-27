@@ -34,8 +34,10 @@ type MenuRepository interface {
 
 // PermissionRepository 权限数据访问接口
 type PermissionRepository interface {
-	// FindByRoleIDs 根据角色ID列表查询有权限的操作标识
+	// FindByRoleIDs 根据角色ID列表查询有权限的操作标识（去重）
 	FindByRoleIDs(roleIDs []uint) ([]*model.Permission, error)
+	// FindByRoleIDsAndMenuIDs 根据角色和菜单查询权限（用于构建菜单树的 authList）
+	FindByRoleIDsAndMenuIDs(roleIDs []uint, menuIDs []uint) ([]*model.Permission, error)
 	// FindByMenuID 查询某菜单下的所有权限
 	FindByMenuID(menuID uint) ([]*model.Permission, error)
 	Create(perm *model.Permission) error

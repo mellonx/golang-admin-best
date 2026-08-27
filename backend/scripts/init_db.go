@@ -18,8 +18,13 @@ func main() {
 		log.Fatal("Failed to load config:", err)
 	}
 
+	dbConfig := config.AppConfig.DB["default"]
+	if dbConfig == nil {
+		log.Fatal("Default database config not found")
+	}
+
 	// 1. 连接 MySQL（不指定数据库）
-	db, err := gorm.Open(mysql.Open(config.AppConfig.DB.GetDSNWithoutDB()), &gorm.Config{
+	db, err := gorm.Open(mysql.Open(dbConfig.GetDSNWithoutDB()), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
@@ -27,7 +32,7 @@ func main() {
 	}
 
 	// 2. 创建数据库
-	dbName := config.AppConfig.DB.DBName
+	dbName := dbConfig.DBName
 	createDBSQL := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", dbName)
 	if err := db.Exec(createDBSQL).Error; err != nil {
 		log.Fatal("Failed to create database:", err)
@@ -35,7 +40,7 @@ func main() {
 	log.Printf("✅ Database '%s' created or already exists\n", dbName)
 
 	// 3. 切换到目标数据库
-	db, err = gorm.Open(mysql.Open(config.AppConfig.DB.GetDSN()), &gorm.Config{
+	db, err = gorm.Open(mysql.Open(dbConfig.GetDSN()), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {

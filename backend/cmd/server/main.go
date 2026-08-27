@@ -3,8 +3,10 @@ package main
 import (
 	"art-design-pro-api/internal/config"
 	"art-design-pro-api/internal/database"
+	"art-design-pro-api/internal/handler"
 	"art-design-pro-api/internal/middleware"
 	"art-design-pro-api/internal/repository"
+	"art-design-pro-api/internal/service"
 	"art-design-pro-api/pkg/response"
 	"log"
 
@@ -26,13 +28,20 @@ func main() {
 	defer database.Close()
 
 	// 3. 初始化 Repository 层（数据访问抽象）
-	repo := repository.NewRepository(database.DB)
-	_ = repo // TODO: 注入到 service/handler 层
+	repo := repository.NewRepository(database.Get()) // 使用默认连接
 
-	// 4. 设置 Gin 模式
+	// 4. 初始化 Service 层（业务逻辑）
+	authService := service.NewAuthService(repo)
+	menuService := service.NewMenuService(repo)
+
+	// 5. 初始化 Handler 层（HTTP 处理）
+	authHandler := handler.NewAuthHandler(authService)
+	systemHandler := handler.NewSystemHandler(menuService)
+
+	// 6. 设置 Gin 模式
 	gin.SetMode(config.AppConfig.Server.Mode)
 
-	// 5. 创建路由
+	// 7. 创建路由
 	r := gin.Default()
 	r.Use(middleware.CORS())
 
@@ -47,24 +56,19 @@ func main() {
 	// API 路由组
 	api := r.Group("/api")
 	{
-		// TODO: 使用 repo 实现真实业务逻辑，见 docs/golang-code.md
-		api.POST("/auth/login", func(c *gin.Context) {
-			response.Error(c, 500, "登录接口待实现，请参考 docs/golang-code.md")
-		})
+		// 公开接口（无需认证）
+		api.POST("/auth/login", authHandler.Login)
 
-		api.GET("/user/info", func(c *gin.Context) {
-			response.Error(c, 500, "用户信息接口待实现，请参考 docs/golang-code.md")
-		})
-
-		v3 := api.Group("/v3")
+		// 需要认证的接口
+		auth := api.Group("")
+		auth.Use(middleware.JWTAuth())
 		{
-			v3.GET("/system/menus", func(c *gin.Context) {
-				response.Error(c, 500, "菜单接口待实现，请参考 docs/golang-code.md")
-			})
+			auth.GET("/user/info", authHandler.GetUserInfo)
+			auth.GET("/v3/system/menus", systemHandler.GetMenuList)
 		}
 	}
 
-	// 6. 启动服务
+	// 8. 启动服务
 	addr := ":" + config.AppConfig.Server.Port
 	log.Printf("🚀 Server starting on http://localhost%s\n", addr)
 	log.Printf("🩺 Health check: http://localhost%s/health\n", addr)

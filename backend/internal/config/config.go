@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	Server ServerConfig
-	DB     DBConfig
+	DB     map[string]*DBConfig // 支持多个命名数据库连接
 	JWT    JWTConfig
 }
 
@@ -26,6 +26,8 @@ type DBConfig struct {
 	Password string
 	DBName   string
 	Charset  string
+	MaxIdle  int // 最大空闲连接数
+	MaxOpen  int // 最大打开连接数
 }
 
 type JWTConfig struct {
@@ -46,13 +48,20 @@ func Load() error {
 			Port: getEnv("SERVER_PORT", "8080"),
 			Mode: getEnv("SERVER_MODE", "debug"),
 		},
-		DB: DBConfig{
-			Host:     getEnv("DB_HOST", "127.0.0.1"),
-			Port:     getEnv("DB_PORT", "3306"),
-			User:     getEnv("DB_USER", "root"),
-			Password: getEnv("DB_PASSWORD", "root"),
-			DBName:   getEnv("DB_NAME", "art_design_pro"),
-			Charset:  getEnv("DB_CHARSET", "utf8mb4"),
+		DB: map[string]*DBConfig{
+			"default": {
+				Host:     getEnv("DB_HOST", "127.0.0.1"),
+				Port:     getEnv("DB_PORT", "3306"),
+				User:     getEnv("DB_USER", "root"),
+				Password: getEnv("DB_PASSWORD", "root"),
+				DBName:   getEnv("DB_NAME", "art_design_pro"),
+				Charset:  getEnv("DB_CHARSET", "utf8mb4"),
+				MaxIdle:  getEnvAsInt("DB_MAX_IDLE", 10),
+				MaxOpen:  getEnvAsInt("DB_MAX_OPEN", 100),
+			},
+			// 可以添加更多连接，例如：
+			// "slave": {...},
+			// "tenant1": {...},
 		},
 		JWT: JWTConfig{
 			Secret:             getEnv("JWT_SECRET", "art-design-pro-secret-change-in-production"),
