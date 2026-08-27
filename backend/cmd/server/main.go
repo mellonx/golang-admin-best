@@ -4,10 +4,9 @@ import (
 	"art-design-pro-api/internal/config"
 	"art-design-pro-api/internal/database"
 	"art-design-pro-api/internal/handler"
-	"art-design-pro-api/internal/middleware"
 	"art-design-pro-api/internal/repository"
+	"art-design-pro-api/internal/router"
 	"art-design-pro-api/internal/service"
-	"art-design-pro-api/pkg/response"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -35,40 +34,16 @@ func main() {
 	menuService := service.NewMenuService(repo)
 
 	// 5. 初始化 Handler 层（HTTP 处理）
-	authHandler := handler.NewAuthHandler(authService)
-	systemHandler := handler.NewSystemHandler(menuService)
-
-	// 6. 设置 Gin 模式
-	gin.SetMode(config.AppConfig.Server.Mode)
-
-	// 7. 创建路由
-	r := gin.Default()
-	r.Use(middleware.CORS())
-
-	// 健康检查
-	r.GET("/health", func(c *gin.Context) {
-		response.Success(c, gin.H{
-			"status":  "healthy",
-			"service": "art-design-pro-api",
-		})
-	})
-
-	// API 路由组
-	api := r.Group("/api")
-	{
-		// 公开接口（无需认证）
-		api.POST("/auth/login", authHandler.Login)
-
-		// 需要认证的接口
-		auth := api.Group("")
-		auth.Use(middleware.JWTAuth())
-		{
-			auth.GET("/user/info", authHandler.GetUserInfo)
-			auth.GET("/v3/system/menus", systemHandler.GetMenuList)
-		}
+	handlers := &router.Handlers{
+		Auth:   handler.NewAuthHandler(authService),
+		System: handler.NewSystemHandler(menuService),
 	}
 
-	// 8. 启动服务
+	// 6. 设置 Gin 模式并注册路由
+	gin.SetMode(config.AppConfig.Server.Mode)
+	r := router.Setup(handlers)
+
+	// 7. 启动服务
 	addr := ":" + config.AppConfig.Server.Port
 	log.Printf("🚀 Server starting on http://localhost%s\n", addr)
 	log.Printf("🩺 Health check: http://localhost%s/health\n", addr)
