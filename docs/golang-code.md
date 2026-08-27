@@ -5,7 +5,7 @@
 ## 一、依赖安装
 
 ```bash
-go mod init art-design-pro-api
+go mod init golang-admin-best
 
 go get github.com/gin-gonic/gin
 go get gorm.io/gorm
@@ -244,8 +244,8 @@ type MenuTree struct {
 package controllers
 
 import (
-	"art-design-pro-api/models"
-	"art-design-pro-api/utils"
+	"golang-admin-best/models"
+	"golang-admin-best/utils"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -354,7 +354,7 @@ func (ac *AuthController) getUserButtons(userID uint) []string {
 package services
 
 import (
-	"art-design-pro-api/models"
+	"golang-admin-best/models"
 
 	"gorm.io/gorm"
 )
@@ -469,8 +469,8 @@ func (ms *MenuService) buildMenuTree(menus []models.Menu, parentID uint, permMap
 package controllers
 
 import (
-	"art-design-pro-api/services"
-	"art-design-pro-api/utils"
+	"golang-admin-best/services"
+	"golang-admin-best/utils"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -496,7 +496,7 @@ func (sc *SystemController) GetMenuList(c *gin.Context) {
 package middleware
 
 import (
-	"art-design-pro-api/utils"
+	"golang-admin-best/utils"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -568,9 +568,9 @@ func Cors() gin.HandlerFunc {
 package routes
 
 import (
-	"art-design-pro-api/controllers"
-	"art-design-pro-api/middleware"
-	"art-design-pro-api/services"
+	"golang-admin-best/controllers"
+	"golang-admin-best/middleware"
+	"golang-admin-best/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -613,8 +613,8 @@ func SetupRoutes(db *gorm.DB) *gin.Engine {
 package main
 
 import (
-	"art-design-pro-api/models"
-	"art-design-pro-api/routes"
+	"golang-admin-best/models"
+	"golang-admin-best/routes"
 	"log"
 
 	"gorm.io/driver/mysql"

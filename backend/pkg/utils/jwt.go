@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"art-design-pro-api/internal/config"
+	"golang-admin-best/internal/config"
 	"errors"
 	"time"
 

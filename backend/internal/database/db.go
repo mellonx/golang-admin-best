@@ -1,7 +1,7 @@
 package database
 
 import (
-	"art-design-pro-api/internal/config"
+	"golang-admin-best/internal/config"
 	"fmt"
 	"log"
 	"time"

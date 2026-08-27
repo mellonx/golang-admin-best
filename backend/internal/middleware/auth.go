@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"art-design-pro-api/pkg/response"
-	"art-design-pro-api/pkg/utils"
+	"golang-admin-best/pkg/response"
+	"golang-admin-best/pkg/utils"
 	"strings"
 
 	"github.com/gin-gonic/gin"

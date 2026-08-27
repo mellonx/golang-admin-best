@@ -1,8 +1,8 @@
 package service
 
 import (
-	"art-design-pro-api/internal/model"
-	"art-design-pro-api/internal/repository"
+	"golang-admin-best/internal/model"
+	"golang-admin-best/internal/repository"
 )
 
 type MenuService struct {

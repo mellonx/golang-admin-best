@@ -281,7 +281,7 @@ Authorization: Bearer {token}
 ### 项目结构
 
 ```
-art-design-pro-api/
+golang-admin-best/
 ├── main.go
 ├── config/
 │   └── config.go

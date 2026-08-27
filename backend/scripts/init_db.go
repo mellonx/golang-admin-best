@@ -1,8 +1,8 @@
 package main
 
 import (
-	"art-design-pro-api/internal/config"
-	"art-design-pro-api/internal/model"
+	"golang-admin-best/internal/config"
+	"golang-admin-best/internal/model"
 	"fmt"
 	"log"
 

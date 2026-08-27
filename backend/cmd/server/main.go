@@ -1,12 +1,12 @@
 package main
 
 import (
-	"art-design-pro-api/internal/config"
-	"art-design-pro-api/internal/database"
-	"art-design-pro-api/internal/handler"
-	"art-design-pro-api/internal/repository"
-	"art-design-pro-api/internal/router"
-	"art-design-pro-api/internal/service"
+	"golang-admin-best/internal/config"
+	"golang-admin-best/internal/database"
+	"golang-admin-best/internal/handler"
+	"golang-admin-best/internal/repository"
+	"golang-admin-best/internal/router"
+	"golang-admin-best/internal/service"
 	"log"
 
 	"github.com/gin-gonic/gin"

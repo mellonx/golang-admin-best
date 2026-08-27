@@ -1,8 +1,8 @@
 package service
 
 import (
-	"art-design-pro-api/internal/repository"
-	"art-design-pro-api/pkg/utils"
+	"golang-admin-best/internal/repository"
+	"golang-admin-best/pkg/utils"
 	"errors"
 
 	"golang.org/x/crypto/bcrypt"

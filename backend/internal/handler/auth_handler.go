@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"art-design-pro-api/internal/service"
-	"art-design-pro-api/pkg/response"
+	"golang-admin-best/internal/service"
+	"golang-admin-best/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )

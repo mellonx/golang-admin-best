@@ -1,4 +1,4 @@
-module art-design-pro-api
+module golang-admin-best
 
 go 1.25.0
 

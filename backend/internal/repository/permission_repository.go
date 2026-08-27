@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"art-design-pro-api/internal/model"
+	"golang-admin-best/internal/model"
 
 	"gorm.io/gorm"
 )

@@ -1,9 +1,9 @@
 package router
 
 import (
-	"art-design-pro-api/internal/handler"
-	"art-design-pro-api/internal/middleware"
-	"art-design-pro-api/pkg/response"
+	"golang-admin-best/internal/handler"
+	"golang-admin-best/internal/middleware"
+	"golang-admin-best/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,7 +34,7 @@ func Setup(h *Handlers) *gin.Engine {
 func healthCheck(c *gin.Context) {
 	response.Success(c, gin.H{
 		"status":  "healthy",
-		"service": "art-design-pro-api",
+		"service": "golang-admin-best",
 	})
 }
 
