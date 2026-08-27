@@ -26,6 +26,7 @@ backend/
 │   ├── repository/           # 数据访问层（接口 + 实现）
 │   ├── service/              # 业务逻辑层
 │   ├── handler/              # HTTP 处理器
+│   ├── router/               # 路由注册（Setup + Handlers 聚合）
 │   └── middleware/           # 中间件（JWT 认证 / CORS）
 ├── pkg/                      # 公共工具
 │   ├── response/             # 统一响应格式
@@ -71,7 +72,13 @@ go mod download
 go run scripts/init_db.go
 ```
 
-这会创建 `art_design_pro` 数据库、7 张表，以及初始账号 `admin`（密码 `123456`）。
+这会创建 `art_design_pro` 数据库、7 张表，以及三个初始账号（密码均为 `123456`），对应前端登录页的快捷登录：
+
+| 用户名 | 角色 | 权限范围 |
+|--------|------|---------|
+| `Super` | R_SUPER | 全部菜单 + 全部按钮权限 |
+| `Admin` | R_ADMIN | 工作台 + 用户管理（无角色管理），按钮 add/edit |
+| `User` | R_USER | 仅工作台/控制台 |
 
 ### 3. 运行
 
@@ -95,7 +102,7 @@ POST /api/auth/login
 Content-Type: application/json
 
 {
-  "userName": "admin",
+  "userName": "Super",
   "password": "123456"
 }
 ```

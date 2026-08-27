@@ -91,66 +91,77 @@ func initData(db *gorm.DB) error {
 		}
 		log.Println("   → Roles created")
 
-		// 2. 插入用户（密码: 123456）
+		// 2. 插入用户（密码均为 123456，用户名对应前端登录页的快捷账号）
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
-		user := &model.User{
-			UserName: "admin",
-			Password: string(hashedPassword),
-			Email:    "admin@example.com",
-			Avatar:   "https://avatars.githubusercontent.com/u/1?v=4",
-			Status:   1,
+		users := []*model.User{
+			{UserName: "Super", Password: string(hashedPassword), Email: "super@example.com", Avatar: "https://avatars.githubusercontent.com/u/1?v=4", Status: 1},
+			{UserName: "Admin", Password: string(hashedPassword), Email: "admin@example.com", Avatar: "https://avatars.githubusercontent.com/u/2?v=4", Status: 1},
+			{UserName: "User", Password: string(hashedPassword), Email: "user@example.com", Avatar: "https://avatars.githubusercontent.com/u/3?v=4", Status: 1},
 		}
-		if err := tx.Create(user).Error; err != nil {
+		if err := tx.Create(&users).Error; err != nil {
 			return err
 		}
-		log.Println("   → User 'admin' created (password: 123456)")
+		log.Println("   → Users created: Super/Admin/User (password: 123456)")
 
-		// 3. 关联用户和角色（admin 拥有超级管理员角色）
-		if err := tx.Exec("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)", user.ID, roles[0].ID).Error; err != nil {
+		// 3. 关联用户和角色（Super→R_SUPER, Admin→R_ADMIN, User→R_USER）
+		userRoles := []struct{ userID, roleID uint }{
+			{users[0].ID, roles[0].ID},
+			{users[1].ID, roles[1].ID},
+			{users[2].ID, roles[2].ID},
+		}
+		for _, ur := range userRoles {
+			if err := tx.Exec("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)", ur.userID, ur.roleID).Error; err != nil {
+				return err
+			}
+		}
+
+		// 4. 插入顶级目录菜单（component 使用 /index/index 布局，title 用 i18n key）
+		dashboard := &model.Menu{ParentID: 0, Path: "/dashboard", Name: "Dashboard", Component: "/index/index", Title: "menus.dashboard.title", Icon: "ri:pie-chart-line", Sort: 1}
+		system := &model.Menu{ParentID: 0, Path: "/system", Name: "System", Component: "/index/index", Title: "menus.system.title", Icon: "ri:user-3-line", Sort: 2}
+		if err := tx.Create([]*model.Menu{dashboard, system}).Error; err != nil {
 			return err
 		}
 
-		// 4. 插入菜单
-		menus := []*model.Menu{
-			{ParentID: 0, Path: "/dashboard", Name: "Dashboard", Component: "/dashboard/index", Title: "工作台", Icon: "ri:dashboard-line", Sort: 1},
-			{ParentID: 0, Path: "/system", Name: "System", Component: "/index/index", Title: "系统管理", Icon: "ri:settings-line", Sort: 2},
-		}
-		if err := tx.Create(&menus).Error; err != nil {
-			return err
-		}
-
-		subMenus := []*model.Menu{
-			{ParentID: menus[1].ID, Path: "user", Name: "User", Component: "/system/user", Title: "用户管理", Icon: "ri:user-line", Sort: 1},
-			{ParentID: menus[1].ID, Path: "role", Name: "Role", Component: "/system/role", Title: "角色管理", Icon: "ri:user-settings-line", Sort: 2},
-		}
-		if err := tx.Create(&subMenus).Error; err != nil {
+		// 5. 插入子菜单（component 对应 src/views 下真实组件）
+		console := &model.Menu{ParentID: dashboard.ID, Path: "console", Name: "Console", Component: "/dashboard/console", Title: "menus.dashboard.console", Icon: "ri:home-smile-2-line", Sort: 1}
+		analysis := &model.Menu{ParentID: dashboard.ID, Path: "analysis", Name: "Analysis", Component: "/dashboard/analysis", Title: "menus.dashboard.analysis", Icon: "ri:align-item-bottom-line", Sort: 2}
+		ecommerce := &model.Menu{ParentID: dashboard.ID, Path: "ecommerce", Name: "Ecommerce", Component: "/dashboard/ecommerce", Title: "menus.dashboard.ecommerce", Icon: "ri:bar-chart-box-line", Sort: 3}
+		userMenu := &model.Menu{ParentID: system.ID, Path: "user", Name: "User", Component: "/system/user", Title: "menus.system.user", Icon: "ri:user-line", KeepAlive: 1, Sort: 1}
+		roleMenu := &model.Menu{ParentID: system.ID, Path: "role", Name: "Role", Component: "/system/role", Title: "menus.system.role", Icon: "ri:user-settings-line", KeepAlive: 1, Sort: 2}
+		if err := tx.Create([]*model.Menu{console, analysis, ecommerce, userMenu, roleMenu}).Error; err != nil {
 			return err
 		}
 		log.Println("   → Menus created")
 
-		// 5. 关联角色和菜单
+		// 6. 关联角色和菜单
+		//    R_SUPER: 全部；R_ADMIN: 除角色管理外；R_USER: 仅工作台+控制台
 		roleMenus := []struct{ roleID, menuID uint }{
-			{roles[0].ID, menus[0].ID}, {roles[0].ID, menus[1].ID}, {roles[0].ID, subMenus[0].ID}, {roles[0].ID, subMenus[1].ID},
-			{roles[1].ID, menus[0].ID}, {roles[1].ID, menus[1].ID}, {roles[1].ID, subMenus[0].ID},
-			{roles[2].ID, menus[0].ID},
+			// 超级管理员：所有菜单
+			{roles[0].ID, dashboard.ID}, {roles[0].ID, console.ID}, {roles[0].ID, analysis.ID}, {roles[0].ID, ecommerce.ID},
+			{roles[0].ID, system.ID}, {roles[0].ID, userMenu.ID}, {roles[0].ID, roleMenu.ID},
+			// 管理员：工作台全部 + 系统管理(用户，不含角色)
+			{roles[1].ID, dashboard.ID}, {roles[1].ID, console.ID}, {roles[1].ID, analysis.ID}, {roles[1].ID, ecommerce.ID},
+			{roles[1].ID, system.ID}, {roles[1].ID, userMenu.ID},
+			// 普通用户：仅工作台 + 控制台
+			{roles[2].ID, dashboard.ID}, {roles[2].ID, console.ID},
 		}
 		for _, rm := range roleMenus {
 			tx.Exec("INSERT INTO role_menus (role_id, menu_id) VALUES (?, ?)", rm.roleID, rm.menuID)
 		}
 
-		// 6. 插入权限（用户管理的按钮权限）
+		// 7. 插入按钮权限（挂在用户管理菜单下）
 		perms := []*model.Permission{
-			{MenuID: subMenus[0].ID, Title: "新增", AuthMark: "add"},
-			{MenuID: subMenus[0].ID, Title: "编辑", AuthMark: "edit"},
-			{MenuID: subMenus[0].ID, Title: "删除", AuthMark: "delete"},
-			{MenuID: subMenus[0].ID, Title: "导出", AuthMark: "export"},
+			{MenuID: userMenu.ID, Title: "新增", AuthMark: "add"},
+			{MenuID: userMenu.ID, Title: "编辑", AuthMark: "edit"},
+			{MenuID: userMenu.ID, Title: "删除", AuthMark: "delete"},
+			{MenuID: userMenu.ID, Title: "导出", AuthMark: "export"},
 		}
 		if err := tx.Create(&perms).Error; err != nil {
 			return err
 		}
 		log.Println("   → Permissions created")
 
-		// 7. 关联角色和权限
+		// 8. 关联角色和权限
 		rolePerms := []struct{ roleID, permID uint }{
 			{roles[0].ID, perms[0].ID}, {roles[0].ID, perms[1].ID}, {roles[0].ID, perms[2].ID}, {roles[0].ID, perms[3].ID},
 			{roles[1].ID, perms[0].ID}, {roles[1].ID, perms[1].ID},
