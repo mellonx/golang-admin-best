@@ -130,6 +130,26 @@ Authorization: {token}
 
 响应 `data`：根据用户角色过滤的菜单树，含 `meta.authList` 按钮权限。
 
+### 获取用户列表（需认证，分页）
+
+```http
+GET /api/user/list?current=1&size=20&userName=
+Authorization: {token}
+```
+
+响应 `data`：`{ records[], current, size, total }`，`records` 每项含
+`id/userName/nickName/userEmail/avatar/status/userRoles[]/createTime` 等。
+
+### 获取角色列表（需认证，分页）
+
+```http
+GET /api/role/list?current=1&size=20&roleName=
+Authorization: {token}
+```
+
+响应 `data`：`{ records[], current, size, total }`，`records` 每项含
+`roleId/roleName/roleCode/description/enabled/createTime`。
+
 ## 开发说明
 
 - 遵循 Go 标准项目布局

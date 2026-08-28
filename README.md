@@ -16,8 +16,9 @@ art-design-pro/
 │   └── package.json
 ├── backend/           # Golang 后端 API
 │   ├── cmd/          # 入口程序
-│   ├── internal/     # 内部包（handler, service, model, middleware）
-│   ├── pkg/          # 公共工具
+│   ├── internal/     # 内部包（config, database, model, repository, service, handler, router, middleware）
+│   ├── pkg/          # 公共工具（response, utils）
+│   ├── scripts/      # 建库建表 + 初始化数据
 │   └── go.mod
 └── docs/              # 项目文档
     ├── backend-guide.md    # 权限系统对接指南
@@ -43,12 +44,17 @@ pnpm dev
 ```bash
 cd backend
 go mod download
+cp .env.example .env        # 按需修改数据库连接、JWT 密钥
+go run ./scripts            # 建库建表 + 初始化数据（含菜单/角色/账号）
 go run cmd/server/main.go
 ```
 
 API 运行在 http://localhost:8080
 
-详细对接方案见 [docs/backend-guide.md](docs/backend-guide.md)
+初始化后会创建数据库 `golang_admin_best` 与三个演示账号（密码均为 `123456`）：
+`Super`（超级管理员）/ `Admin`（管理员）/ `User`（普通用户）。
+
+详细说明见 [backend/README.md](backend/README.md) 与 [docs/backend-guide.md](docs/backend-guide.md)
 
 ## 🛠 技术栈
 
@@ -60,12 +66,13 @@ API 运行在 http://localhost:8080
 - **路由**: Vue Router
 - **权限**: 路由级 / 操作级 / 数据级三层权限控制
 
-### 后端（待实现）
-- **语言**: Golang 1.21+
+### 后端
+- **语言**: Golang（module `golang-admin-best`）
 - **框架**: Gin
-- **ORM**: GORM
-- **数据库**: MySQL
+- **ORM**: GORM（支持多命名数据库连接）
+- **数据库**: MySQL（默认库名 `golang_admin_best`）
 - **认证**: JWT
+- **架构**: handler → service → repository → model 分层
 
 ## 📖 开发说明
 
@@ -73,21 +80,21 @@ API 运行在 http://localhost:8080
 
 前端默认运行在**前端权限模式**（使用 Mock 数据），开箱即用。
 
-### 后端权限模式
+### 后端权限模式（已实现）
 
-1. 修改 `frontend/.env`：
-   ```bash
-   VITE_ACCESS_MODE = backend
-   ```
+前端已切换为后端模式（`frontend/.env` 中 `VITE_ACCESS_MODE = backend`），
+菜单与权限由后端 API 提供。已实现接口：
 
-2. 启动后端服务（需先实现，见 `docs/` 文档）
+| 接口 | 说明 |
+|------|------|
+| `POST /api/auth/login` | 登录，返回 token / refreshToken |
+| `GET /api/user/info` | 用户信息（roles + buttons 权限） |
+| `GET /api/v3/system/menus` | 按角色过滤的菜单树 |
+| `GET /api/user/list` | 用户列表（分页） |
+| `GET /api/role/list` | 角色列表（分页） |
 
-3. 后端需实现 3 个核心接口：
-   - `POST /api/auth/login` - 登录
-   - `GET /api/user/info` - 用户信息
-   - `GET /api/v3/system/menus` - 菜单树
-
-详细 API 规范见 [docs/backend-guide.md](docs/backend-guide.md)
+菜单数据已与前端 11 个路由模块对齐，登录后按角色显示不同菜单。
+详细 API 规范见 [backend/README.md](backend/README.md) 与 [docs/backend-guide.md](docs/backend-guide.md)。
 
 ## 📝 License
 

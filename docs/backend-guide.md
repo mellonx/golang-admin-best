@@ -1,5 +1,8 @@
 # Art Design Pro 权限系统对接指南（Golang 后端实现）
 
+> 📌 本文讲解权限系统的设计与接口约定，概念部分仍然适用。
+> 后端已实现于 `backend/` 目录，运行方式与最新接口列表见 [backend/README.md](../backend/README.md)。
+
 ## 一、权限系统架构概览
 
 Art Design Pro 支持**两种权限模式**：

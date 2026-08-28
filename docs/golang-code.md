@@ -2,6 +2,12 @@
 
 基于 **Gin + GORM + JWT** 实现。
 
+> ⚠️ **本文为最初的设计参考**，示例代码采用扁平结构（controllers/services/models）。
+> **实际实现已落地在 `backend/` 目录**，并演进为更规范的分层架构：
+> `handler → service → repository → model`，配置走 `.env`、支持多数据库连接、
+> 菜单数据已与前端 11 个路由模块对齐。请以 `backend/` 源码和 [backend/README.md](../backend/README.md) 为准，
+> 本文仅用于理解设计思路。
+
 ## 一、依赖安装
 
 ```bash
