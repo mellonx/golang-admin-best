@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import { readdirSync, existsSync } from 'fs'
 import { fileURLToPath } from 'url'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import viteCompression from 'vite-plugin-compression'
@@ -128,8 +129,8 @@ export default ({ mode }: { mode: string }) => {
         '@wangeditor/editor',
         '@wangeditor/editor-for-vue',
         'element-plus/es',
-        'element-plus/es/components/*/style/css',
-        'element-plus/es/components/*/style/index'
+        // 显式列入全部 Element Plus 组件样式，避免首次进入页面时按需发现导致整页刷新
+        ...elementPlusStyleEntries()
       ]
     },
     css: {
@@ -162,4 +163,28 @@ export default ({ mode }: { mode: string }) => {
 
 function resolvePath(paths: string) {
   return path.resolve(__dirname, paths)
+}
+
+/**
+ * 生成所有 Element Plus 组件样式的预构建入口。
+ *
+ * unplugin-element-plus 会在编译 .vue 时按需注入组件样式 import，
+ * 这些注入 Vite 启动期的依赖扫描看不到，导致首次进入使用新组件的页面时
+ * 触发 “new dependencies optimized ... reloading” 整页刷新。
+ * 启动时把全部组件样式显式列入 optimizeDeps.include 即可消除该重载。
+ */
+function elementPlusStyleEntries(): string[] {
+  const base = path.resolve(__dirname, 'node_modules/element-plus/es/components')
+  const entries: string[] = []
+  if (!existsSync(base)) return entries
+  for (const name of readdirSync(base)) {
+    const styleDir = path.join(base, name, 'style')
+    if (existsSync(path.join(styleDir, 'css.mjs'))) {
+      entries.push(`element-plus/es/components/${name}/style/css`)
+    }
+    if (existsSync(path.join(styleDir, 'index.mjs'))) {
+      entries.push(`element-plus/es/components/${name}/style/index`)
+    }
+  }
+  return entries
 }
