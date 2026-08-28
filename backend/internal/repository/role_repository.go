@@ -32,6 +32,25 @@ func (r *roleRepository) FindByUserID(userID uint) ([]*model.Role, error) {
 	return roles, err
 }
 
+func (r *roleRepository) FindPage(offset, limit int, roleName string) ([]*model.Role, int64, error) {
+	var roles []*model.Role
+	var total int64
+
+	query := r.db.Model(&model.Role{})
+	if roleName != "" {
+		query = query.Where("role_name LIKE ?", "%"+roleName+"%")
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	err := query.Order("id ASC").
+		Offset(offset).Limit(limit).
+		Find(&roles).Error
+	return roles, total, err
+}
+
 func (r *roleRepository) Create(role *model.Role) error {
 	return r.db.Create(role).Error
 }

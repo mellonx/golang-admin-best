@@ -12,8 +12,10 @@ type UserRepository interface {
 	FindByID(id uint) (*model.User, error)
 	Create(user *model.User) error
 	Update(user *model.User) error
-	// WithRoles 预加载用户的角色信息
+	// FindByIDWithRoles 预加载用户的角色信息
 	FindByIDWithRoles(id uint) (*model.User, error)
+	// FindPage 分页查询用户（预加载角色），支持按用户名模糊过滤
+	FindPage(offset, limit int, userName string) ([]*model.User, int64, error)
 }
 
 // RoleRepository 角色数据访问接口
@@ -21,6 +23,8 @@ type RoleRepository interface {
 	FindByCode(code string) (*model.Role, error)
 	FindByUserID(userID uint) ([]*model.Role, error)
 	Create(role *model.Role) error
+	// FindPage 分页查询角色，支持按角色名模糊过滤
+	FindPage(offset, limit int, roleName string) ([]*model.Role, int64, error)
 }
 
 // MenuRepository 菜单数据访问接口

@@ -61,6 +61,10 @@ func registerAuthRoutes(api *gin.RouterGroup, h *Handlers) {
 
 	// 用户相关
 	auth.GET("/user/info", h.Auth.GetUserInfo)
+	auth.GET("/user/list", h.System.GetUserList)
+
+	// 角色相关
+	auth.GET("/role/list", h.System.GetRoleList)
 
 	// 系统管理
 	v3 := auth.Group("/v3")

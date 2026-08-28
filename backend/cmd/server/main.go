@@ -32,11 +32,12 @@ func main() {
 	// 4. 初始化 Service 层（业务逻辑）
 	authService := service.NewAuthService(repo)
 	menuService := service.NewMenuService(repo)
+	systemService := service.NewSystemService(repo)
 
 	// 5. 初始化 Handler 层（HTTP 处理）
 	handlers := &router.Handlers{
 		Auth:   handler.NewAuthHandler(authService),
-		System: handler.NewSystemHandler(menuService),
+		System: handler.NewSystemHandler(menuService, systemService),
 	}
 
 	// 6. 设置 Gin 模式并注册路由
