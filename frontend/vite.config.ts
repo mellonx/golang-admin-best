@@ -109,6 +109,7 @@ export default ({ mode }: { mode: string }) => {
     // 依赖预构建：避免运行时重复请求与转换，提升首次加载速度
     optimizeDeps: {
       include: [
+        'echarts',
         'echarts/core',
         'echarts/charts',
         'echarts/components',
@@ -118,6 +119,14 @@ export default ({ mode }: { mode: string }) => {
         'crypto-js',
         'file-saver',
         'vue-img-cutter',
+        'qrcode.vue',
+        'vue-draggable-plus',
+        'highlight.js',
+        'nprogress',
+        'mitt',
+        'axios',
+        '@wangeditor/editor',
+        '@wangeditor/editor-for-vue',
         'element-plus/es',
         'element-plus/es/components/*/style/css',
         'element-plus/es/components/*/style/index'
