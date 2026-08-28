@@ -31,8 +31,9 @@ backend/
 ├── pkg/                      # 公共工具
 │   ├── response/             # 统一响应格式
 │   └── utils/                # JWT 工具
-├── scripts/
-│   └── init_db.go            # 建库建表 + 初始化数据
+├── scripts/                  # 建库建表 + 初始化数据
+│   ├── init_db.go            # 入口：建库、迁移、递归插入
+│   └── menu_seed.go          # 完整菜单树种子数据
 ├── .env.example              # 配置模板
 └── go.mod
 ```
@@ -69,7 +70,7 @@ go mod download
 确保 `.env` 中数据库配置正确，然后运行初始化脚本（自动建库、建表、插入初始数据）：
 
 ```bash
-go run scripts/init_db.go
+go run ./scripts
 ```
 
 这会创建 `golang_admin_best` 数据库、7 张表，以及三个初始账号（密码均为 `123456`），对应前端登录页的快捷登录：

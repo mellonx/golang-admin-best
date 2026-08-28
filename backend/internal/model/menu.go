@@ -12,13 +12,18 @@ type Menu struct {
 	Redirect  string    `gorm:"size:255;comment:重定向路径" json:"redirect"`
 	Title     string    `gorm:"size:100;not null;comment:菜单标题" json:"title"`
 	Icon      string    `gorm:"size:100;comment:图标" json:"icon"`
-	KeepAlive int8      `gorm:"default:0;comment:是否缓存" json:"keepAlive"`
-	IsHide    int8      `gorm:"default:0;comment:是否隐藏" json:"isHide"`
-	IsIframe  int8      `gorm:"default:0;comment:是否iframe" json:"isIframe"`
-	Link      string    `gorm:"size:255;comment:外部链接" json:"link"`
-	Sort      int       `gorm:"default:0;comment:排序" json:"sort"`
-	Status    int8      `gorm:"default:1" json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
+	KeepAlive     int8      `gorm:"default:0;comment:是否缓存" json:"keepAlive"`
+	IsHide        int8      `gorm:"default:0;comment:是否在菜单隐藏" json:"isHide"`
+	IsHideTab     int8      `gorm:"default:0;comment:是否隐藏标签页" json:"isHideTab"`
+	IsIframe      int8      `gorm:"default:0;comment:是否iframe" json:"isIframe"`
+	IsFullPage    int8      `gorm:"default:0;comment:是否全屏页面" json:"isFullPage"`
+	FixedTab      int8      `gorm:"default:0;comment:是否固定标签页" json:"fixedTab"`
+	Link          string    `gorm:"size:255;comment:外部链接" json:"link"`
+	ActivePath    string    `gorm:"size:255;comment:高亮的菜单路径" json:"activePath"`
+	ShowTextBadge string    `gorm:"size:50;comment:文本徽标" json:"showTextBadge"`
+	Sort          int       `gorm:"default:0;comment:排序" json:"sort"`
+	Status        int8      `gorm:"default:1" json:"status"`
+	CreatedAt     time.Time `json:"createdAt"`
 
 	Permissions []*Permission `gorm:"foreignKey:MenuID" json:"permissions,omitempty"`
 }

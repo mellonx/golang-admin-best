@@ -69,6 +69,9 @@ func main() {
 	log.Println("🎉 Database setup complete!")
 }
 
+// allRoles 所有角色代码（菜单未显式限制角色时默认对全部角色可见）
+var allRoles = []string{"R_SUPER", "R_ADMIN", "R_USER"}
+
 func initData(db *gorm.DB) error {
 	// 检查是否已初始化
 	var count int64
@@ -88,6 +91,10 @@ func initData(db *gorm.DB) error {
 		}
 		if err := tx.Create(&roles).Error; err != nil {
 			return err
+		}
+		roleIDByCode := make(map[string]uint, len(roles))
+		for _, r := range roles {
+			roleIDByCode[r.RoleCode] = r.ID
 		}
 		log.Println("   → Roles created")
 
@@ -115,61 +122,103 @@ func initData(db *gorm.DB) error {
 			}
 		}
 
-		// 4. 插入顶级目录菜单（component 使用 /index/index 布局，title 用 i18n key）
-		dashboard := &model.Menu{ParentID: 0, Path: "/dashboard", Name: "Dashboard", Component: "/index/index", Title: "menus.dashboard.title", Icon: "ri:pie-chart-line", Sort: 1}
-		system := &model.Menu{ParentID: 0, Path: "/system", Name: "System", Component: "/index/index", Title: "menus.system.title", Icon: "ri:user-3-line", Sort: 2}
-		if err := tx.Create([]*model.Menu{dashboard, system}).Error; err != nil {
+		// 4. 递归插入菜单树（数据见 menu_seed.go），并按角色关联菜单/权限
+		if err := insertMenus(tx, menuSeeds(), 0, allRoles, roleIDByCode); err != nil {
 			return err
 		}
-
-		// 5. 插入子菜单（component 对应 src/views 下真实组件）
-		console := &model.Menu{ParentID: dashboard.ID, Path: "console", Name: "Console", Component: "/dashboard/console", Title: "menus.dashboard.console", Icon: "ri:home-smile-2-line", Sort: 1}
-		analysis := &model.Menu{ParentID: dashboard.ID, Path: "analysis", Name: "Analysis", Component: "/dashboard/analysis", Title: "menus.dashboard.analysis", Icon: "ri:align-item-bottom-line", Sort: 2}
-		ecommerce := &model.Menu{ParentID: dashboard.ID, Path: "ecommerce", Name: "Ecommerce", Component: "/dashboard/ecommerce", Title: "menus.dashboard.ecommerce", Icon: "ri:bar-chart-box-line", Sort: 3}
-		userMenu := &model.Menu{ParentID: system.ID, Path: "user", Name: "User", Component: "/system/user", Title: "menus.system.user", Icon: "ri:user-line", KeepAlive: 1, Sort: 1}
-		roleMenu := &model.Menu{ParentID: system.ID, Path: "role", Name: "Role", Component: "/system/role", Title: "menus.system.role", Icon: "ri:user-settings-line", KeepAlive: 1, Sort: 2}
-		if err := tx.Create([]*model.Menu{console, analysis, ecommerce, userMenu, roleMenu}).Error; err != nil {
-			return err
-		}
-		log.Println("   → Menus created")
-
-		// 6. 关联角色和菜单
-		//    R_SUPER: 全部；R_ADMIN: 除角色管理外；R_USER: 仅工作台+控制台
-		roleMenus := []struct{ roleID, menuID uint }{
-			// 超级管理员：所有菜单
-			{roles[0].ID, dashboard.ID}, {roles[0].ID, console.ID}, {roles[0].ID, analysis.ID}, {roles[0].ID, ecommerce.ID},
-			{roles[0].ID, system.ID}, {roles[0].ID, userMenu.ID}, {roles[0].ID, roleMenu.ID},
-			// 管理员：工作台全部 + 系统管理(用户，不含角色)
-			{roles[1].ID, dashboard.ID}, {roles[1].ID, console.ID}, {roles[1].ID, analysis.ID}, {roles[1].ID, ecommerce.ID},
-			{roles[1].ID, system.ID}, {roles[1].ID, userMenu.ID},
-			// 普通用户：仅工作台 + 控制台
-			{roles[2].ID, dashboard.ID}, {roles[2].ID, console.ID},
-		}
-		for _, rm := range roleMenus {
-			tx.Exec("INSERT INTO role_menus (role_id, menu_id) VALUES (?, ?)", rm.roleID, rm.menuID)
-		}
-
-		// 7. 插入按钮权限（挂在用户管理菜单下）
-		perms := []*model.Permission{
-			{MenuID: userMenu.ID, Title: "新增", AuthMark: "add"},
-			{MenuID: userMenu.ID, Title: "编辑", AuthMark: "edit"},
-			{MenuID: userMenu.ID, Title: "删除", AuthMark: "delete"},
-			{MenuID: userMenu.ID, Title: "导出", AuthMark: "export"},
-		}
-		if err := tx.Create(&perms).Error; err != nil {
-			return err
-		}
-		log.Println("   → Permissions created")
-
-		// 8. 关联角色和权限
-		rolePerms := []struct{ roleID, permID uint }{
-			{roles[0].ID, perms[0].ID}, {roles[0].ID, perms[1].ID}, {roles[0].ID, perms[2].ID}, {roles[0].ID, perms[3].ID},
-			{roles[1].ID, perms[0].ID}, {roles[1].ID, perms[1].ID},
-		}
-		for _, rp := range rolePerms {
-			tx.Exec("INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)", rp.roleID, rp.permID)
-		}
+		log.Println("   → Menus & permissions created")
 
 		return nil
 	})
+}
+
+// insertMenus 递归插入菜单，处理 parent_id、排序、按钮权限，并按“有效角色”关联 role_menus/role_permissions。
+// inherited 为父级下放的可见角色；子菜单的有效角色 = inherited ∩ 自身 Roles（自身未设则继承 inherited），避免出现子菜单可见而父菜单不可见的孤儿。
+func insertMenus(tx *gorm.DB, items []seedMenu, parentID uint, inherited []string, roleIDByCode map[string]uint) error {
+	for i, it := range items {
+		m := &model.Menu{
+			ParentID:      parentID,
+			Path:          it.Path,
+			Name:          it.Name,
+			Component:     it.Component,
+			Redirect:      it.Redirect,
+			Title:         it.Title,
+			Icon:          it.Icon,
+			KeepAlive:     b2i(it.KeepAlive),
+			IsHide:        b2i(it.IsHide),
+			IsHideTab:     b2i(it.IsHideTab),
+			IsIframe:      b2i(it.IsIframe),
+			IsFullPage:    b2i(it.IsFullPage),
+			FixedTab:      b2i(it.FixedTab),
+			Link:          it.Link,
+			ActivePath:    it.ActivePath,
+			ShowTextBadge: it.ShowTextBadge,
+			Sort:          i + 1,
+			Status:        1,
+		}
+		if err := tx.Create(m).Error; err != nil {
+			return err
+		}
+
+		// 计算有效角色
+		eff := inherited
+		if len(it.Roles) > 0 {
+			eff = intersect(inherited, it.Roles)
+		}
+
+		// 关联 role_menus
+		for _, rc := range eff {
+			if rid, ok := roleIDByCode[rc]; ok {
+				if err := tx.Exec("INSERT INTO role_menus (role_id, menu_id) VALUES (?, ?)", rid, m.ID).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		// 按钮权限 + role_permissions
+		for _, a := range it.Auth {
+			p := &model.Permission{MenuID: m.ID, Title: a.Title, AuthMark: a.AuthMark}
+			if err := tx.Create(p).Error; err != nil {
+				return err
+			}
+			for _, rc := range eff {
+				if rid, ok := roleIDByCode[rc]; ok {
+					if err := tx.Exec("INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)", rid, p.ID).Error; err != nil {
+						return err
+					}
+				}
+			}
+		}
+
+		// 递归子菜单
+		if len(it.Children) > 0 {
+			if err := insertMenus(tx, it.Children, m.ID, eff, roleIDByCode); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// b2i 布尔转 int8（1/0）
+func b2i(b bool) int8 {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// intersect 求交集，保留 a 的顺序
+func intersect(a, b []string) []string {
+	set := make(map[string]struct{}, len(b))
+	for _, x := range b {
+		set[x] = struct{}{}
+	}
+	out := make([]string, 0, len(a))
+	for _, x := range a {
+		if _, ok := set[x]; ok {
+			out = append(out, x)
+		}
+	}
+	return out
 }
